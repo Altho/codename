@@ -14,7 +14,8 @@
   "license": "MIT",
   "dependencies": {
     "@tauri-apps/api": ">=2.0.0",
-    "@tauri-apps/plugin-shell": ">=2.0.0"
+    "@tauri-apps/plugin-shell": ">=2.0.0",
+    "svelte-persisted-store": "^0.11.0"
   },
   "devDependencies": {
     "@skeletonlabs/skeleton": "^2.10.2",
