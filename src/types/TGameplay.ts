@@ -13,11 +13,13 @@ export interface CastResult {
 
 export type Attribute = {
     value: number;
+    name: string;
     skills: Skill[]
 }
 
 export type Skill = {
     value: number;
+    name: string;
     bonus: number;
     groupBonus: number;
     levelBonus: number;
