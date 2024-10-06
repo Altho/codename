@@ -2,12 +2,15 @@ export type Dice = {
     value: number;
     name: string;
     amount: number;
+    triggerEffect: number;
 }
 
-export type CastResult = {
+
+
+export interface CastResult {
     value: number;
     didTriggerEffect: boolean;
-    EffectAmount: number;
+    effectAmount: number;
 }
 
 export type SkillEffect = {
