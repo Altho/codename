@@ -7,7 +7,7 @@ export const levelBonus = (p: number):number => {
     return Math.ceil(bonus(p))
 }
 
-export const GroupBonus = (p: number):number => {
+export const groupBonus = (p: number):number => {
     return Math.ceil(bonus(p))
 }
 

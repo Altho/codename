@@ -20,9 +20,9 @@ export type Attribute = {
 export type Skill = {
     value: number;
     name: string;
-    bonus: number;
-    groupBonus: number;
-    levelBonus: number;
+    bonus: () => number;
+    groupBonus: () => number;
+    levelBonus: () => number;
     other: number;
     total: number;
     DcEffect: string;
