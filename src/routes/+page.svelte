@@ -1,12 +1,10 @@
 <script lang="ts">
 import {Die} from "$lib/helpers/Gameplay";
 import Auth from "$lib/components/auth/Auth.svelte";
-import {supabaseAnonKey} from "$lib/db/client";
 const d6 = new Die(6, "d6", 6);
-console.log(supabaseAnonKey)
 </script>
 
-<Auth />
+
 
 <div class="container mx-auto p-8 space-y-8">
     <h1 class="h1">Test</h1>
