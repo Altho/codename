@@ -1,7 +1,7 @@
 <script>import "../app.css";
 import '../global.css'
 import {AppShell} from "@skeletonlabs/skeleton";
-import LeftMenu from "../components/layout/leftMenu/LeftMenu.svelte";</script>
+import LeftMenu from "$lib/components/layout/leftMenu/LeftMenu.svelte";</script>
 
 
 

@@ -1,4 +1,4 @@
-import type {CastResult} from "../types/TGameplay";
+import type {CastResult} from "$lib/types/TGameplay";
 
 export class Die {
     private value: number;
