@@ -36,7 +36,8 @@
 
 			if (!error) {
 				console.log(data);
-				$characters.push(data);
+				characters.set(data ?? data);
+				console.log($characters);
 			} else {
 				console.error('Error:', error);
 			}
