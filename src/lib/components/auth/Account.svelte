@@ -2,16 +2,17 @@
     import { onMount } from 'svelte'
     import type { AuthSession } from '@supabase/supabase-js'
     import { supabase } from '$lib/db/client'
+    import Avatar from "$lib/components/auth/Avatar.svelte";
 
     export let session: AuthSession
 
     let loading = false
     let username: string | null = null
-    let website: string | null = null
     let avatarUrl: string | null = null
 
     onMount(() => {
         getProfile()
+        console.log(avatarUrl)
     })
 
     const getProfile = async () => {
@@ -21,7 +22,7 @@
 
             const { data, error, status } = await supabase
                 .from('profiles')
-                .select('username')
+                .select('username ,avatar_url' )
                 .eq('id', user.id)
                 .single()
 
@@ -29,6 +30,7 @@
 
             if (data) {
                 username = data.username
+                avatarUrl = data.avatar_url
             }
         } catch (error) {
             if (error instanceof Error) {
@@ -66,7 +68,7 @@
 </script>
 
 <form on:submit|preventDefault="{updateProfile}" class="items-center flex flex-col">
-    <div>Email: {session.user.email}</div>
+    <Avatar bind:url="{avatarUrl}" size="{150}" on:upload="{updateProfile}" />
     <div>
         <label for="username">Name</label>
         <input class="input px-5" id="username" type="text" bind:value="{username}" />

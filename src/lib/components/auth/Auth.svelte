@@ -15,10 +15,10 @@
             const { error } = await supabase.auth.signInWithOtp({ email })
             if (error) throw error
             toastStore.trigger({message:'Check your email for login link!',
-                background: 'variant-ghost-tertiary'
-            })
+                background: 'variant-ghost-tertiary'})
             email = ``
             emailSent = true
+
         } catch (error) {
             if (error instanceof Error) {
                 toastStore.trigger({message: error.toString(),
