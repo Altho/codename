@@ -4,7 +4,7 @@
     import { AppShell } from "@skeletonlabs/skeleton";
     import LeftMenu from "$lib/components/layout/leftMenu/LeftMenu.svelte";
     import { onMount } from "svelte";
-    import { loadClasses } from "$lib/helpers/Gameplay";
+    import { loadClasses, loadCoreSkills } from "$lib/helpers/Gameplay";
     import { characters } from "$lib/stores/characters";
     import { supabase } from "$lib/db/client";
     import type { AuthSession } from "@supabase/supabase-js";
@@ -26,6 +26,7 @@
 
         if (session?.user.id) {
             await loadClasses();
+            await loadCoreSkills();
 
             const { data, error } = await supabase
                 .from("Characters")

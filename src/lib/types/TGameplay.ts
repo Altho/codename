@@ -46,3 +46,15 @@ export type BuiltClass = Database["public"]["Tables"]["Classes"]["Row"] & {
     };
   }>;
 };
+
+type CoreSkill = Database["public"]["Tables"]["Skills"]["Row"] & {
+  Synergies: Array<{
+    Classes: Database["public"]["Tables"]["Classes"]["Row"];
+  }>;
+  CoreSkillsCategories: Database["public"]["Tables"]["CoreSkillsCategories"]["Row"];
+};
+
+export type CoreSkillsCategoriesWithSkills =
+  Database["public"]["Tables"]["CoreSkillsCategories"]["Row"] & {
+    Skills: CoreSkill[];
+  };

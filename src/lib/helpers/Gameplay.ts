@@ -1,7 +1,10 @@
 import type { CastResult } from "$lib/types/TGameplay";
 import { supabase } from "$lib/db/client";
-import { classesStore } from "$lib/stores/classes";
-import type { BuiltClass } from "$lib/types/TGameplay";
+import { classesStore, coreSkills } from "$lib/stores/classes";
+import type {
+  BuiltClass,
+  CoreSkillsCategoriesWithSkills,
+} from "$lib/types/TGameplay";
 
 export class Die {
   private value: number;
@@ -46,6 +49,29 @@ export const loadClasses = async () => {
   if (!error) {
     classesStore.set(data as BuiltClass[]);
   } else {
+    console.error("Error:", error);
+  }
+};
+
+export const loadCoreSkills = async () => {
+  const { data, error } = (await supabase.from("CoreSkillsCategories").select(`
+      *,
+      Skills (
+        *,
+        Synergies (
+          Classes (*)
+        )
+      )
+    `)) as {
+    data: CoreSkillsCategoriesWithSkills[] | null;
+    error: any;
+  };
+
+  if (data) {
+    coreSkills.set(data);
+  }
+
+  if (error) {
     console.error("Error:", error);
   }
 };
