@@ -11,6 +11,8 @@
     import Account from "$lib/components/auth/Account.svelte";
     import Auth from "$lib/components/auth/Auth.svelte";
     import { initializeStores, Toast } from "@skeletonlabs/skeleton";
+    import CoreSkills from "$lib/components/skills/CoreSkills.svelte";
+    import { coreSkillsStore } from "$lib/stores/classes";
 
     initializeStores();
 
@@ -25,8 +27,12 @@
         });
 
         if (session?.user.id) {
+            // Load game data. Those are not tied to the player and can be loaded before the characters.
             await loadClasses();
             await loadCoreSkills();
+            console.log("Core Skills Store:", $coreSkillsStore);
+            console.log("Is Array:", Array.isArray($coreSkillsStore));
+            console.log("Length:", $coreSkillsStore.length);
 
             const { data, error } = await supabase
                 .from("Characters")

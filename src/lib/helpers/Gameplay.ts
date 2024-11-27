@@ -1,6 +1,6 @@
 import type { CastResult } from "$lib/types/TGameplay";
 import { supabase } from "$lib/db/client";
-import { classesStore, coreSkills } from "$lib/stores/classes";
+import { classesStore, coreSkillsStore } from "$lib/stores/classes";
 import type {
   BuiltClass,
   CoreSkillsCategoriesWithSkills,
@@ -60,7 +60,8 @@ export const loadCoreSkills = async () => {
         *,
         Synergies (
           Classes (*)
-        )
+        ),
+        NpcUse (*)
       )
     `)) as {
     data: CoreSkillsCategoriesWithSkills[] | null;
@@ -68,7 +69,7 @@ export const loadCoreSkills = async () => {
   };
 
   if (data) {
-    coreSkills.set(data);
+    coreSkillsStore.set(data);
   }
 
   if (error) {
