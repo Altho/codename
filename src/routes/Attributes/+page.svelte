@@ -1,7 +1,7 @@
 <script lang="ts">
-    import {attributes} from "../../stores/attributes";
+    import {attributes} from "../../lib/stores/attributes";
     console.log($attributes)
-    import Attribute from "../../components/skills/Attribute.svelte";
+    import Attribute from "../../lib/components/skills/Attribute.svelte";
 </script>
 
 <h1>Reactivity test</h1>

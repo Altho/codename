@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type {Skill} from "../../types/TGameplay";
+    import type {Skill} from "$lib/types/TGameplay";
 
     export let skill: Skill
 

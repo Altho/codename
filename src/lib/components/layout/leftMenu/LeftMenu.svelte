@@ -10,6 +10,8 @@
         <hr/>
         <li><a href="Reference">Reference</a></li>
         <li><a href="Lookup table">Lookup table</a></li>
+        <hr/>
+        <li><a href="Account">Account</a></li>
     </ul>
 </nav>
 

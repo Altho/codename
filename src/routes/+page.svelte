@@ -1,7 +1,7 @@
 <script lang="ts">
-import {Die} from "../helpers/Gameplay";
+import {Die} from "$lib/helpers/Gameplay";
+import Auth from "$lib/components/auth/Auth.svelte";
 const d6 = new Die(6, "d6", 6);
-console.log(d6.roll())
 </script>
 
 
