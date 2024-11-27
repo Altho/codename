@@ -4,6 +4,7 @@
     import { AppShell } from "@skeletonlabs/skeleton";
     import LeftMenu from "$lib/components/layout/leftMenu/LeftMenu.svelte";
     import { onMount } from "svelte";
+    import { loadClasses } from "$lib/helpers/Gameplay";
     import { characters } from "$lib/stores/characters";
     import { supabase } from "$lib/db/client";
     import type { AuthSession } from "@supabase/supabase-js";
@@ -14,32 +15,6 @@
     initializeStores();
 
     let session: AuthSession | null;
-
-    const loadClasses = async () => {
-        const { data, error } = await supabase.from("Classes").select(`
-                *,
-                SituationalBonuses (*),
-                UniqueBonuses (*),
-                TRC (*),
-                SPC (*),
-                ClassesEffect (
-                    CriticalEffects (
-                        id,
-                        Name,
-                        DcEffect,
-                        TriggeredOn,
-                        Scales (*),
-                        BonusFor (*)
-                    )
-                )
-            `);
-
-        if (!error) {
-            console.log(data);
-        } else {
-            console.error("Error:", error);
-        }
-    };
 
     onMount(async () => {
         const { data: sessionData } = await supabase.auth.getSession();
