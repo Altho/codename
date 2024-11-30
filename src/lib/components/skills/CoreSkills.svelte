@@ -1,6 +1,9 @@
 <script lang="ts">
     import type { CoreSkillsCategoriesWithSkills } from "$lib/types/TGameplay";
     import { Avatar } from "@skeletonlabs/skeleton";
+    import { classesStore } from "$lib/stores/classes";
+
+    const classesAmount = $classesStore.length;
 
     export let categorie: CoreSkillsCategoriesWithSkills;
 </script>
@@ -84,6 +87,8 @@
                         <td class="px-4 py-3 text-sm text-gray-300">
                             {#if skill.Synergies.length === 0}
                                 <span>None</span>
+                            {:else if skill.Synergies.length === classesAmount}
+                                <span>All</span>
                             {:else}
                                 <div class="inline">
                                     {#each skill.Synergies as synergy, i}
