@@ -15,10 +15,7 @@
     import NewcharacterForm from "$lib/components/Character/NewcharacterForm.svelte";
     
     console.log($characters)
-
-
     
-  
 
     const onNextHandler = () => {
         step++;
