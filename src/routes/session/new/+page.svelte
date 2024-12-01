@@ -1,7 +1,7 @@
 <script lang="ts">
     import { coreSkillsStore } from "$lib/stores/classes";
     import CoreSkills from "$lib/components/skills/CoreSkills.svelte";
-    import {Step, Stepper} from "@skeletonlabs/skeleton";
+    import {getToastStore, initializeStores, Step, Stepper} from "@skeletonlabs/skeleton";
     import SessionForm from "$lib/components/sessions/SessionForm.svelte";
     import {
         addCharacterToSession,
@@ -20,6 +20,9 @@
     import NewcharacterForm from "$lib/components/Character/NewcharacterForm.svelte";
     import type {Character} from "$lib/types/TGameplay";
     import {currentSession} from "$lib/stores/GameSession";
+
+
+
 
     let selectedCharacterId: number | null = null;
     
@@ -48,6 +51,7 @@
         console.log($currentSession.id, "SESSION")
         addCharacterToSession($currentSession.id, $selectedCharacter?.id, true)
         addSkillsToCharacter($selectedCharacter?.id, $currentSession.id)
+        selectedCharacter.set(null)
     }
 
 
@@ -66,7 +70,7 @@
             <SessionForm/>
             </div>
         </Step>
-        <Step>
+        <Step locked={$selectedCharacter === null}>
             <svelte:fragment slot="header">-- Select a character --</svelte:fragment>
             {#each $characters as character}
                 <CharacterCard

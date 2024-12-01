@@ -105,6 +105,18 @@ serve(async (req: Request) => {
 
     if (insertError) throw insertError
 
+    const { data: skillsPool, error: skillsPoolError } = await supabaseClient
+        .from('coreskill_pools')
+        .insert([{
+          character_id,
+          amount: 10,
+          session_id
+        }])
+        .select()
+        .single()
+
+    if (skillsPoolError) throw skillsPoolError
+
     return new Response(JSON.stringify({ data: insertedSkillPoints }), {
       headers: {...corsHeaders, 'Content-Type': 'application/json' },
       status: 201,
