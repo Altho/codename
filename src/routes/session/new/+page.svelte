@@ -3,8 +3,13 @@
     import CoreSkills from "$lib/components/skills/CoreSkills.svelte";
     import {Step, Stepper} from "@skeletonlabs/skeleton";
     import SessionForm from "$lib/components/sessions/SessionForm.svelte";
-    import {createCharacter, createSession} from "$lib/helpers/SupabaseFunctions";
-    import {characterBeingCreated} from "$lib/stores/characters";
+    import {
+        addCharacterToSession,
+        addSkillsToCharacter,
+        createCharacter,
+        createSession
+    } from "$lib/helpers/SupabaseFunctions";
+    import {characterBeingCreated, selectedCharacter} from "$lib/stores/characters";
 
     import {characters} from "$lib/stores/characters";
 
@@ -13,24 +18,42 @@
     import {sessionBeingCreated} from "$lib/stores/session";
     import CharacterCard from "$lib/components/Character/CharacterCard.svelte";
     import NewcharacterForm from "$lib/components/Character/NewcharacterForm.svelte";
+    import type {Character} from "$lib/types/TGameplay";
+    import {currentSession} from "$lib/stores/GameSession";
+
+    let selectedCharacterId: number | null = null;
     
     console.log($characters)
     
 
-    const onNextHandler = () => {
+    const onNextHandler = async () => {
         step++;
         
         switch (step) {
             case 1:
                 console.log($sessionBeingCreated.restricted, "-----")
-                createSession($sessionBeingCreated.name, $sessionBeingCreated.restricted, $sessionBeingCreated.password)
+                const session = await createSession($sessionBeingCreated.name, $sessionBeingCreated.restricted, $sessionBeingCreated.password)
+                currentSession.set(session.data);
+
+
         }
     }
     
     const onCompleteHandler = () => {
         step++;
-        createCharacter($characterBeingCreated.name)
+        if (!$currentSession || !$selectedCharacter)
+        {
+            throw new Error()
+        }
+        console.log($currentSession.id, "SESSION")
+        addCharacterToSession($currentSession.id, $selectedCharacter?.id, true)
+        addSkillsToCharacter($selectedCharacter?.id, $currentSession.id)
     }
+
+
+   const handleSelecttion = (character: Character) => {
+       selectedCharacterId = character.id
+   }
     
     
 </script>
@@ -46,8 +69,11 @@
         <Step>
             <svelte:fragment slot="header">-- Select a character --</svelte:fragment>
             {#each $characters as character}
-                <CharacterCard character={character}/>
-                {/each}
+                <CharacterCard
+                        character={character}
+                        isSelected={$selectedCharacter?.id === character.id}
+                />
+            {/each}
             <h1>Create a character</h1>
             <NewcharacterForm/>
         </Step>

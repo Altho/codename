@@ -77,7 +77,7 @@
 <div class="container mx-auto p-8 space-y-8">
     <h1 class="h1">Current public sessions</h1>
     {#each $sessions as s}
-        <div class="card p-4 .card-hover">
+        <div class="hover:bg-gray-800/50 transition-colors duration-150 card p-4 ">
             <h2>{s.name}</h2>
             <p>{s.id}</p>
         </div>

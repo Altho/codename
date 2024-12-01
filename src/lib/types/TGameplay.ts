@@ -30,6 +30,26 @@ export type Skill = {
   DcEffect: string;
 };
 
+
+export interface Profile {
+  id: string;
+  Website: string | null;
+  isAdmin: boolean;
+  FullName: string | null;
+  Username: string;
+  AvatarUrl: string | null;
+  UpdatedAt: string;
+}
+
+export interface Character {
+  id: number;
+  Created_at: string;
+  Updated_at: string;
+  Name: string;
+  ProfileId: string;
+  Profiles: Profile;
+}
+
 export type BuiltClass = Database["public"]["Tables"]["Classes"]["Row"] & {
   SituationalBonuses: Database["public"]["Tables"]["SituationalBonuses"]["Row"][];
   UniqueBonuses: Database["public"]["Tables"]["UniqueBonuses"]["Row"][];
