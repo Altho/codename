@@ -53,8 +53,8 @@ serve(async (req: Request) => {
       });
     }
 
-    if (restricted === true && password.length <= 0) {
-      return new Response(JSON.stringify({ error: "A password is required for private sessions" }), {
+    if (restricted === true && password === null) {
+      return new Response(JSON.stringify({ error: {restricted}}), {
         status: 400,
         headers: {...corsHeaders, "Content-Type": "application/json" },
       });

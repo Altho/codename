@@ -22,6 +22,7 @@
         
         switch (step) {
             case 1:
+                console.log($sessionBeingCreated.restricted, "-----")
                 createSession($sessionBeingCreated.name, $sessionBeingCreated.restricted, $sessionBeingCreated.password)
         }
     }

@@ -1,6 +1,7 @@
 <script lang="ts">
     import {SlideToggle} from "@skeletonlabs/skeleton";
     import {sessionBeingCreated} from "$lib/stores/session";
+    console.log($sessionBeingCreated)
 </script>
 
 <form class="form">

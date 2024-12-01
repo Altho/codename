@@ -7,7 +7,7 @@ export const createSession = async (sessionName: string, restricted: boolean, pa
 
 
         const { data, error } = await supabase.functions.invoke('createSession', {
-            body: { name: sessionName, restricted: true, password: password ? password : null },
+            body: { name: sessionName, restricted, password: (password || password?.length <= 0) ? password : null },
             headers: {
                 Authorization: `Bearer ${sessionData.session?.access_token}`
             }
