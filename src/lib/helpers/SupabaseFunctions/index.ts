@@ -52,6 +52,32 @@ export const createCharacter = async (heroName: string) => {
     }
 }
 
+export const increaseCoreSkill = async (characterId: number, sessionId: string, skillId: number) => {
+    try {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+
+
+        const { data, error } = await supabase.functions.invoke('increaseCoreSkill', {
+            body: { skillId, characterId, sessionId },
+            headers: {
+                Authorization: `Bearer ${sessionData.session?.access_token}`
+            }
+        });
+
+        if (error) {
+            console.error('Function error:', error);
+            throw error;
+        }
+
+        console.log('Success:', data);
+        return data;
+    } catch (err) {
+        console.error('Detailed error:', err);
+        throw err;
+    }
+}
+
 
 export const addCharacterToSession = async (sessionId: string, characterId: number, isGm: boolean) => {
     try {

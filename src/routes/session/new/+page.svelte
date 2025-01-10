@@ -1,5 +1,6 @@
 <script lang="ts">
     import { coreSkillsStore } from "$lib/stores/classes";
+    import {sessionBanner} from "$lib/stores/sessionBanner";
     import CoreSkills from "$lib/components/skills/CoreSkills.svelte";
     import {getToastStore, initializeStores, Step, Stepper} from "@skeletonlabs/skeleton";
     import SessionForm from "$lib/components/sessions/SessionForm.svelte";
