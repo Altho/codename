@@ -9,12 +9,13 @@
     let subscription: RealtimeChannel;
 
     async function fetchAmount() {
-        if (!$sessionBanner?.characterId) return;
+        if (!$sessionBanner?.characterId || !$sessionBanner?.sessionId) return;
 
         const { data, error } = await supabase
             .from('coreskill_pools')
             .select('amount')
             .eq('character_id', $sessionBanner.characterId)
+            .eq('session_id', $sessionBanner.sessionId)
             .maybeSingle();
 
         if (error) {
@@ -25,7 +26,7 @@
         amount = data?.amount ?? null;
         updatePointsStore(amount ? amount : 0);
     }
-    
+
     const updatePointsStore = (amount: number) => {
         availablePoints.set(amount);
     }
@@ -33,7 +34,7 @@
     onMount(() => {
         fetchAmount();
 
-        if ($sessionBanner?.characterId) {
+        if ($sessionBanner?.characterId && $sessionBanner?.sessionId) {
             subscription = supabase
                 .channel('coreskill_pools_changes')
                 .on(
@@ -42,9 +43,10 @@
                         event: '*',
                         schema: 'public',
                         table: 'coreskill_pools',
-                        filter: `character_id=eq.${$sessionBanner.characterId}`
+                        filter: `character_id=eq.${$sessionBanner.characterId} `
                     },
-                    () => {
+                    (payload) => {
+                        console.log('Received realtime update:', payload); 
                         fetchAmount();
                     }
                 )
@@ -56,7 +58,7 @@
         subscription?.unsubscribe();
     });
 
-    $: if ($sessionBanner?.characterId) {
+    $: if ($sessionBanner?.characterId && $sessionBanner?.sessionId) {
         fetchAmount();
     }
 </script>

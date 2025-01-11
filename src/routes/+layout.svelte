@@ -3,18 +3,18 @@
     import "../global.css";
     import {AppShell, type ModalComponent} from "@skeletonlabs/skeleton";
     import LeftMenu from "$lib/components/layout/leftMenu/LeftMenu.svelte";
-    import { onMount } from "svelte";
-    import { loadClasses, loadCoreSkills } from "$lib/helpers/Gameplay";
-    import { characters } from "$lib/stores/characters";
+    import {onMount} from "svelte";
+    import {loadClasses, loadCoreSkills} from "$lib/helpers/Gameplay";
+    import {characters} from "$lib/stores/characters";
     import {sessionBanner} from "$lib/stores/sessionBanner";
-    import { supabase } from "$lib/db/client";
-    import type { AuthSession, RealtimeChannel } from "@supabase/supabase-js";
+    import {supabase} from "$lib/db/client";
+    import type {AuthSession, RealtimeChannel} from "@supabase/supabase-js";
     import Account from "$lib/components/auth/Account.svelte";
     import Auth from "$lib/components/auth/Auth.svelte";
-    import { initializeStores, Toast, Modal } from "@skeletonlabs/skeleton";
+    import {initializeStores, Toast, Modal} from "@skeletonlabs/skeleton";
     import JoinModal from "$lib/components/sessions/JoinModal.svelte";
 
-    import { getToastStore } from '@skeletonlabs/skeleton';
+    import {getToastStore} from '@skeletonlabs/skeleton';
     import {data} from "autoprefixer";
     import SessionBanner from "$lib/components/layout/sessionBanner/SessionBanner.svelte";
 
@@ -34,10 +34,9 @@
     let subscription: RealtimeChannel;
 
     const modalRegistry: Record<string, ModalComponent> = {
-        joinSession: { ref: JoinModal }
+        joinSession: {ref: JoinModal}
     };
 
-   
 
     const handleInserts = () => {
         console.log("handle inserts");
@@ -51,22 +50,23 @@
         async function updateSessionBanner() {
             if (!session?.user.id) return;
 
-            const { data, error } = await supabase
+            const {data, error} = await supabase
                 .from('sessions_characters')
                 .select(`
-                    id,
-                    is_gm,
-                    created_at,
-                    game_sessions (
-                        id,
-                        name,
-                        finished_at
-                    ),
-                    Characters (
-                        id,
-                        Name
-                    )
-                `)
+        id,
+        is_gm,
+        created_at,
+        game_sessions (
+            id,
+            name,
+            finished_at
+        ),
+        Characters!inner (
+            id,
+            Name,
+            ProfileId
+        )
+    `)
                 .eq('Characters.ProfileId', session.user.id)
                 .is('game_sessions.finished_at', null)
                 .single();
@@ -75,18 +75,6 @@
                 console.error('Error fetching session data:', error);
                 console.log('Current user ID:', session.user.id);
 
-                // Debug query to check character
-                const characterCheck = await supabase
-                    .from('Characters')
-                    .select('*')
-                    .eq('ProfileId', session.user.id);
-                console.log('Character check:', characterCheck);
-
-                // Debug query to check sessions_characters
-                const sessionCheck = await supabase
-                    .from('sessions_characters')
-                    .select('*');
-                console.log('Sessions check:', sessionCheck);
 
                 sessionBanner.set(null);
                 return;
@@ -109,7 +97,7 @@
         }
 
         async function init() {
-            const { data: sessionData } = await supabase.auth.getSession();
+            const {data: sessionData} = await supabase.auth.getSession();
             session = sessionData.session;
 
             supabase.auth.onAuthStateChange((_event, _session) => {
@@ -136,7 +124,7 @@
                                 await updateSessionBanner();
                             } else {
                                 // Handle new session creation
-                                const { data: profile } = await supabase
+                                const {data: profile} = await supabase
                                     .from('Profiles')
                                     .select('Username')
                                     .eq('id', payload.new.owner)
@@ -171,7 +159,7 @@
                 await loadClasses();
                 await loadCoreSkills();
 
-                const { data, error } = await supabase
+                const {data, error} = await supabase
                     .from("Characters")
                     .select(`*, Profiles!inner(*)`)
                     .eq("Profiles.id", session.user.id);
@@ -213,24 +201,24 @@
     });
 </script>
 
-<Toast />
-<Modal components={modalRegistry} />
+<Toast/>
+<Modal components={modalRegistry}/>
 
 {#if $sessionBanner?.showBanner}
     <SessionBanner session={session}/>
-    {/if}
+{/if}
 
 {#if session }
     <AppShell slotSidebarLeft="bg-surface-500/5 w-56 p-4">
         <svelte:fragment slot="header"></svelte:fragment>
         <svelte:fragment slot="sidebarLeft">
-            <LeftMenu />
+            <LeftMenu/>
         </svelte:fragment>
         <!-- (sidebarRight) -->
         <!-- (pageHeader) -->
         <!-- Router Slot -->
 
-        <slot />
+        <slot/>
 
         <!-- ---- / ---- -->
         <svelte:fragment slot="pageFooter">Page Footer</svelte:fragment>
@@ -239,6 +227,6 @@
 
 {:else}
     <div class="flex justify-center items-center h-full">
-        <Auth />
+        <Auth/>
     </div>
 {/if}
