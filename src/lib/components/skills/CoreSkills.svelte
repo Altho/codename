@@ -20,6 +20,7 @@
     import {
         fly
     } from 'svelte/transition';
+    import {bonus} from "$lib/helpers/SkillFunctions";
     
 
     $: if ($sessionBanner?.characterId && $sessionBanner?.sessionId) {
@@ -31,7 +32,7 @@
     async function loadSkillPoints() {
         const { data: points, error } = await supabase
             .from('skill_points')
-            .select('SkillId, Points')
+            .select('SkillId, Points, bonus, syn, other')
             .eq('character_id', $sessionBanner.characterId)
             .eq('session_id', $sessionBanner.sessionId);
 
@@ -40,7 +41,14 @@
             return;
         }
 
-        skillPointsStore.set(points); // Set the array directly
+        const pointsWithTotal = points.map(point => ({
+            ...point,
+            get total() {
+                return this.Points + this.bonus + this.syn + this.other;
+            }
+        }));
+
+        skillPointsStore.set(pointsWithTotal);
     }
 
     onMount(() => {
@@ -183,10 +191,10 @@
                         <td class="px-4 py-3 text-sm text-gray-300"
                             >{skill.Name}</td
                         >
-                        <td class="px-4 py-3 text-sm text-gray-300">0</td>
-                        <td class="px-4 py-3 text-sm text-gray-300">1</td>
-                        <td class="px-4 py-3 text-sm text-gray-300">0</td>
-                        <td class="px-4 py-3 text-sm text-gray-300">0</td>
+                        <td class="px-4 py-3 text-sm text-gray-300">{$skillPointsStore.find(p => p.SkillId === skill.id)?.bonus ?? 0}</td>
+                        <td class="px-4 py-3 text-sm text-gray-300">{$skillPointsStore.find(p => p.SkillId === skill.id)?.syn ?? 0}</td>
+                        <td class="px-4 py-3 text-sm text-gray-300">{$skillPointsStore.find(p => p.SkillId === skill.id)?.other ?? 0}</td>
+                        <td class="px-4 py-3 text-sm text-gray-300">{$skillPointsStore.find(p => p.SkillId === skill.id)?.total ?? 0}</td>
                         <td class="px-4 py-3 text-sm text-gray-300"
                             >{skill.DcEffect}</td
                         >

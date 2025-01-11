@@ -1,7 +1,7 @@
 <script lang="ts">
     import "../app.css";
     import "../global.css";
-    import { AppShell } from "@skeletonlabs/skeleton";
+    import {AppShell, type ModalComponent} from "@skeletonlabs/skeleton";
     import LeftMenu from "$lib/components/layout/leftMenu/LeftMenu.svelte";
     import { onMount } from "svelte";
     import { loadClasses, loadCoreSkills } from "$lib/helpers/Gameplay";
@@ -11,9 +11,9 @@
     import type { AuthSession, RealtimeChannel } from "@supabase/supabase-js";
     import Account from "$lib/components/auth/Account.svelte";
     import Auth from "$lib/components/auth/Auth.svelte";
-    import { initializeStores, Toast } from "@skeletonlabs/skeleton";
-    import CoreSkills from "$lib/components/skills/CoreSkills.svelte";
-    import { coreSkillsStore } from "$lib/stores/classes";
+    import { initializeStores, Toast, Modal } from "@skeletonlabs/skeleton";
+    import JoinModal from "$lib/components/sessions/JoinModal.svelte";
+
     import { getToastStore } from '@skeletonlabs/skeleton';
     import {data} from "autoprefixer";
     import SessionBanner from "$lib/components/layout/sessionBanner/SessionBanner.svelte";
@@ -32,6 +32,10 @@
     const toastStore = getToastStore();
     let session: AuthSession | null = null;
     let subscription: RealtimeChannel;
+
+    const modalRegistry: Record<string, ModalComponent> = {
+        joinSession: { ref: JoinModal }
+    };
 
    
 
@@ -210,6 +214,7 @@
 </script>
 
 <Toast />
+<Modal components={modalRegistry} />
 
 {#if $sessionBanner?.showBanner}
     <SessionBanner session={session}/>

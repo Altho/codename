@@ -79,14 +79,27 @@ export const increaseCoreSkill = async (characterId: number, sessionId: string, 
 }
 
 
-export const addCharacterToSession = async (sessionId: string, characterId: number, isGm: boolean) => {
+export const addCharacterToSession = async (sessionId: string, characterId: number, isGm: boolean, password: string = '') => {
     try {
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
 
+        // If password is provided, verify it first
+        if (password.length > 0) {
+            const { data: sessionCheck, error: passwordError } = await supabase
+                .from('game_sessions')
+                .select('password')
+                .eq('id', sessionId)
+                .single();
+
+            if (passwordError) throw passwordError;
+            if (sessionCheck.password !== password) {
+                throw new Error('Incorrect password');
+            }
+        }
 
         const { data, error } = await supabase.functions.invoke('addCharacterToSession', {
-            body: { sessionId, characterId, isGm},
+            body: { sessionId, characterId, isGm },
             headers: {
                 Authorization: `Bearer ${sessionData.session?.access_token}`
             }

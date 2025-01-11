@@ -3,6 +3,7 @@
     import type { AuthSession } from '@supabase/supabase-js';
     import {sessionBanner} from "$lib/stores/sessionBanner";
     import {supabase} from "$lib/db/client";
+    import {goto} from "$app/navigation";
 
     export let session: AuthSession | null = null;
     const toastStore = getToastStore();
@@ -31,8 +32,8 @@
                 background: 'variant-filled-success'
             });
 
-            // Explicitly set the session banner to null
             sessionBanner.set(null);
+            goto('/')
         } catch (error) {
             console.error('Error in handleLeaveSession:', error);
             toastStore.trigger({

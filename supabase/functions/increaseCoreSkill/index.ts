@@ -2,6 +2,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { serve } from "https://deno.land/std@0.140.0/http/server.ts";
 import {corsHeaders} from "../_shared/cors.ts";
+import {getBonus} from "../_shared/helpers.ts";
 
 
 serve(async (req: Request) => {
@@ -107,7 +108,10 @@ serve(async (req: Request) => {
 
     const { data: skillPoints, error: skillPointsError } = await supabaseClient
         .from("skill_points")
-        .update({ Points: currentSkillPoints.Points + 1 })
+        .update({
+          Points: currentSkillPoints.Points + 1,
+          bonus: getBonus(currentSkillPoints.Points + 1),
+        })
         .eq("SkillId", skillId)
         .eq("session_id", sessionId)
         .eq("character_id", characterId)
@@ -123,7 +127,7 @@ serve(async (req: Request) => {
 
   
 
-    return new Response(JSON.stringify({ data: response }), {
+    return new Response(JSON.stringify({ data: skillPoints }), {
       status: 200,
       headers: {...corsHeaders, "Content-Type": "application/json" },
     });

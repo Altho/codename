@@ -62,7 +62,7 @@
 </script>
 
 {#if amount !== null}
-    <div class="fixed top-4 right-12 bg-surface-100-800-token p-4 rounded-lg shadow-lg border border-surface-300-600-token z-50">
+    <div class="fixed top-4 right-8 lg:right-1/6 bg-surface-100-800-token p-4 rounded-lg shadow-lg border border-surface-300-600-token z-50">
         <div class="flex flex-col items-center">
             <h4 class="text-lg font-semibold mb-1">Available Points</h4>
             <p class="text-2xl font-bold">{$availablePoints}</p>

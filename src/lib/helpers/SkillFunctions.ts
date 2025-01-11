@@ -1,6 +1,11 @@
 
 export const bonus = (p: number):number => {
-    return Math.floor( 0.5 * (Math.sqrt( 8 * p) +1))
+    const threshold = 4;
+    if (p < threshold) {
+        return p;
+    } else {
+        return Math.ceil(Math.sqrt(4 * p))
+    }
 }
 
 export const levelBonus = (p: number):number => {

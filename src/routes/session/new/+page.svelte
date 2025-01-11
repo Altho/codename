@@ -21,6 +21,7 @@
     import NewcharacterForm from "$lib/components/Character/NewcharacterForm.svelte";
     import type {Character} from "$lib/types/TGameplay";
     import {currentSession} from "$lib/stores/GameSession";
+    import {BadgeAlert} from "lucide-svelte";
 
 
 
@@ -63,6 +64,17 @@
     
 </script>
 
+{#if ($sessionBanner)}
+    <div class="container  mx-auto p-8 space-y-8">
+    <aside class="alert variant-ghost">
+        <div class="alert-message">
+            <h3 class="h3">Existing session</h3>
+            <p>You're already enrolled in a session. Leave the current session to create a new one</p>
+        </div>
+    </aside>
+    </div>
+    {:else}
+
 <div class=" container mx-auto p-8 space-y-8">
     <Stepper on:step={onNextHandler} on:complete={onCompleteHandler}>
         <Step>
@@ -85,3 +97,4 @@
         <!-- ... -->
     </Stepper>
 </div>
+    {/if}
