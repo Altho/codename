@@ -53,6 +53,42 @@ serve(async (req: Request) => {
       });
     }
 
+    const { data: currentPool, error: poolError } = await supabaseClient
+        .from("coreskill_pools")
+        .select("amount")
+        .eq("character_id", characterId)
+        .eq("session_id", sessionId)
+        .single();
+
+    if (poolError || !currentPool) {
+      return new Response(JSON.stringify({ error: "Core skill pool not found" }), {
+        status: 404,
+        headers: {...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (currentPool.amount <= 0) {
+      return new Response(JSON.stringify({ error: "Out of points" }), {
+        status: 404,
+        headers: {...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: response, error: insertError } = await supabaseClient
+        .from("coreskill_pools")
+        .update({ amount: currentPool.amount - 1 })
+        .eq("character_id", characterId)
+        .eq("session_id", sessionId)
+        .select()
+        .single();
+
+    if (insertError) {
+      return new Response(JSON.stringify({ error: insertError.message }), {
+        status: 400,
+        headers: {...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
 
     const { data: currentSkillPoints, error: fetchError } = await supabaseClient
         .from("skill_points")
@@ -85,34 +121,7 @@ serve(async (req: Request) => {
       });
     }
 
-    const { data: currentPool, error: poolError } = await supabaseClient
-        .from("coreskill_pools")
-        .select("amount")
-        .eq("character_id", characterId)
-        .eq("session_id", sessionId)
-        .single();
-
-    if (poolError || !currentPool) {
-      return new Response(JSON.stringify({ error: "Core skill pool not found" }), {
-        status: 404,
-        headers: {...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { data: response, error: insertError } = await supabaseClient
-        .from("coreskill_pools")
-        .update({ amount: currentPool.amount - 1 })
-        .eq("character_id", characterId)
-        .eq("session_id", sessionId)
-        .select()
-        .single();
-    
-    if (insertError) {
-      return new Response(JSON.stringify({ error: insertError.message }), {
-        status: 400,
-        headers: {...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+  
 
     return new Response(JSON.stringify({ data: response }), {
       status: 200,

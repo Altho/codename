@@ -3,6 +3,7 @@
     import { Avatar } from "@skeletonlabs/skeleton";
     import { classesStore } from "$lib/stores/classes";
     import {sessionBanner} from "$lib/stores/sessionBanner";
+    import {coreSkillsLoader} from "$lib/stores/loaders";
     import { Plus } from 'lucide-svelte';
     import {availablePoints} from "$lib/stores/pointsPool";
     import {increaseCoreSkill} from "$lib/helpers/SupabaseFunctions";
@@ -10,14 +11,22 @@
     import { onMount, onDestroy } from 'svelte';
     import type { RealtimeChannel } from '@supabase/supabase-js';
     import { writable } from 'svelte/store';
-    import { skillPointsStore } from '$lib/stores/skillPoints';  // Import your store
+    import { skillPointsStore } from '$lib/stores/skillPoints';
+
+    let flashingSkillId: number | null = null;
 
     const skillPoints = writable<Record<string, number>>({});
     let subscription: RealtimeChannel;
+    import {
+        fly
+    } from 'svelte/transition';
+    
 
     $: if ($sessionBanner?.characterId && $sessionBanner?.sessionId) {
         loadSkillPoints();
     }
+    
+    let flash = false;
 
     async function loadSkillPoints() {
         const { data: points, error } = await supabase
@@ -73,7 +82,15 @@
     const handleCLick = async (skillId: number) => {
         const sessionId = $sessionBanner?.sessionId;
         const characterId = $sessionBanner?.characterId;
+        coreSkillsLoader.set(true)
         await increaseCoreSkill(characterId, sessionId, skillId);
+        coreSkillsLoader.set(false)
+        flash = true;
+        flashingSkillId = skillId;
+        setTimeout(() => {
+            flashingSkillId = null;
+        }, 500);
+
     }
 
     const classesAmount = $classesStore.length;
@@ -152,14 +169,15 @@
                         {#if ($availablePoints > 0)}
                             <td class="px-4 py-3 text-sm text-gray-300">
                                 <button
-                                        class="flex items-center justify-center bg-green-600 hover:bg-green-700 transition-colors duration-200 rounded p-1.5"
+                                        class="flex items-center justify-center bg-green-600 hover:bg-green-700 disabled:bg-gray-500 transition-colors duration-200 rounded p-1.5"
                                         on:click={() => {handleCLick(skill.id)}}
+                                        disabled={$coreSkillsLoader}
                                 >
                                     <Plus class="w-4 h-4 text-white" />
                                 </button>
                             </td>
                             {/if}
-                        <td class="px-4 py-3 text-sm text-gray-300">
+                        <td class="px-4 py-3 text-sm text-gray-300 {flashingSkillId === skill.id ? 'flash' : ''}">
                             {$skillPointsStore.find(p => p.SkillId === skill.id)?.Points ?? 0}
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-300"
@@ -200,3 +218,38 @@
         </table>
     </div>
 </div>
+
+<style>
+    @keyframes highlight {
+        0% {
+            background-color: transparent;
+            transform: scale(1);
+        }
+        20% {
+            background-color: rgba(34, 197, 94, 0.3);
+            transform: scale(1.1);
+        }
+        100% {
+            background-color: transparent;
+            transform: scale(1);
+        }
+    }
+
+    @keyframes pulse {
+        0% {
+            color: rgb(209, 213, 219);
+        }
+        50% {
+            color: rgb(14, 143, 61);
+            text-shadow: 0 0 8px rgba(8, 73, 31, 0.5);
+            font-size: x-large;
+        }
+        100% {
+            color: rgb(209, 213, 219);
+        }
+    }
+
+    .flash {
+        animation: pulse 0.8s ease-out;
+    }
+</style>
