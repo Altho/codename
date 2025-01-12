@@ -1,9 +1,28 @@
 <script lang="ts">
-    import { onMount, onDestroy } from 'svelte';
-    import { supabase } from "$lib/db/client";
-    import { sessionBanner } from "$lib/stores/sessionBanner";
-    import type { RealtimeChannel } from '@supabase/supabase-js';
+    import {onMount, onDestroy} from 'svelte';
+    import {supabase} from "$lib/db/client";
+    import {sessionBanner} from "$lib/stores/sessionBanner";
+    import type {RealtimeChannel} from '@supabase/supabase-js';
     import {insertChatMessage} from "$lib/helpers/SupabaseFunctions";
+
+    let messagesContainer: HTMLDivElement;
+    let shouldAutoScroll = true;
+
+    function handleScroll() {
+        if (!messagesContainer) return;
+
+        const {scrollTop, scrollHeight, clientHeight} = messagesContainer;
+        const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 10;
+        shouldAutoScroll = isAtBottom;
+    }
+
+    $: if (messages && messagesContainer && shouldAutoScroll) {
+        setTimeout(() => {
+            if (messagesContainer instanceof HTMLDivElement) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }, 0);
+    }
 
     let message = '';
     let isLoading = false;
@@ -13,13 +32,18 @@
         content: string;
         created_at: string;
         sender: number;
+        is_gm: boolean;
+        is_log: boolean;
         senderName?: string;
     }> = [];
+
 
     async function fetchMessages() {
         if (!$sessionBanner?.sessionId) return;
 
-        const { data, error } = await supabase
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+        const {data, error} = await supabase
             .from('chat_messages')
             .select(`
                 *,
@@ -28,8 +52,9 @@
                     Name
                 )
             `)
+            .gt('created_at', fiveMinutesAgo.toISOString())
             .eq('session_id', $sessionBanner.sessionId)
-            .order('created_at', { ascending: true });
+            .order('created_at', {ascending: true});
 
         if (error) {
             console.error('Error fetching messages:', error);
@@ -39,22 +64,23 @@
         messages = data.map(msg => ({
             ...msg,
             senderName: msg.Characters?.Name,
-            is_gm: msg.Characters?.is_gm,
+            is_gm: msg.is_gm,
             is_log: msg.is_log
         }));
     }
 
     const handleClick = async () => {
-        if (!$sessionBanner || message.length <= 0){
+        if (!$sessionBanner || message.length <= 0) {
             return
         }
         isLoading = true;
         await insertChatMessage($sessionBanner.characterId, message, false, $sessionBanner.isGm, $sessionBanner.sessionId);
         isLoading = false;
         message = '';
-    }
+        console.log(messages)    }
 
     onMount(() => {
+
 
         if ($sessionBanner?.sessionId) {
             subscription = supabase
@@ -69,7 +95,7 @@
                     },
                     async (payload) => {
                         if (payload.eventType === 'INSERT') {
-                            const { data: characterData, error } = await supabase
+                            const {data: characterData, error} = await supabase
                                 .from('Characters')
                                 .select('Name')
                                 .eq('id', payload.new.sender)
@@ -105,7 +131,7 @@
     <div class="term">
         <div class="h-full flex flex-col justify-end">
             {#if messages.length > 0}
-                <div class="messages-container mb-4">
+                <div on:scroll={handleScroll} bind:this={messagesContainer} class="messages-container mb-4">
                     {#each messages as message}
                         <div class="message">
                             {#if message.is_log}
