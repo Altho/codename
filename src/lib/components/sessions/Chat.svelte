@@ -3,14 +3,14 @@
     import {supabase} from "$lib/db/client";
     import {sessionBanner} from "$lib/stores/sessionBanner";
     import type {RealtimeChannel} from '@supabase/supabase-js';
-    import {insertChatMessage} from "$lib/helpers/SupabaseFunctions";
+    import {Dices, Dice3} from 'lucide-svelte';
+    import {castDice, insertChatMessage} from "$lib/helpers/SupabaseFunctions";
 
     let messagesContainer: HTMLDivElement;
     let shouldAutoScroll = true;
 
     function handleScroll() {
         if (!messagesContainer) return;
-
         const {scrollTop, scrollHeight, clientHeight} = messagesContainer;
         const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 10;
         shouldAutoScroll = isAtBottom;
@@ -34,6 +34,7 @@
         sender: number;
         is_gm: boolean;
         is_log: boolean;
+        is_dice?: boolean;
         senderName?: string;
     }> = [];
 
@@ -61,12 +62,27 @@
             return;
         }
 
+        const getSenderName = (name: string | undefined, isLog: boolean) => {
+            if (!name) {
+                return isLog ? '[System]' : '[AutoDice]';
+            } else {
+                return `[${name}]`;
+            }
+        }
+
         messages = data.map(msg => ({
             ...msg,
-            senderName: msg.Characters?.Name,
+            senderName: getSenderName(msg.Characters?.Name, msg.is_log),
             is_gm: msg.is_gm,
             is_log: msg.is_log
         }));
+    }
+
+    const handleThrow = async (amount:number) => {
+        if (!$sessionBanner ) {
+            return
+        }
+        await castDice($sessionBanner.characterName, $sessionBanner.sessionId, amount);
     }
 
     const handleClick = async () => {
@@ -94,7 +110,15 @@
                         filter: `session_id=eq.${$sessionBanner.sessionId}`
                     },
                     async (payload) => {
+
                         if (payload.eventType === 'INSERT') {
+                            if (payload.new.sender === null) {
+                                messages = [...messages, {
+                                    ...payload.new,
+                                    senderName: payload.new.is_dice ? '[AutoDice]' : '[System]'
+                                }];
+                                return;
+                            }
                             const {data: characterData, error} = await supabase
                                 .from('Characters')
                                 .select('Name')
@@ -133,12 +157,22 @@
             {#if messages.length > 0}
                 <div on:scroll={handleScroll} bind:this={messagesContainer} class="messages-container mb-4">
                     {#each messages as message}
-                        <div class="message">
+                        <div class="message p-1 rounded">
                             {#if message.is_log}
-                                <span class="text-yellow-500 italic">{message.message}</span>
+                                <div class="bg-orange-900/20 p-1 rounded">
+                                    <span class="text-purple-500 font-bold">{message.senderName}:</span>
+                                    <span class="text-purple-400 italic">{message.message}</span>
+                                </div>
+                            {:else if message.is_dice}
+                                <div class="bg-blue-900/20 p-1 rounded">
+                                    <span class="text-blue-500 font-bold">{message.senderName}:</span>
+                                    <span class="text-blue-400">{message.message}</span>
+                                </div>
                             {:else if message.is_gm}
-                                <span class="text-red-500 font-bold">[GM] {message.senderName}:</span>
-                                <span class="text-red-400">{message.message}</span>
+                                <div class="bg-orange-900/20 p-1 rounded">
+                                    <span class="text-orange-500 font-bold">[GM] {message.senderName}:</span>
+                                    <span class="text-orange-400">{message.message}</span>
+                                </div>
                             {:else}
                                 <span class="text-green-500">{message.senderName}:</span>
                                 <span class="text-green-300">{message.message}</span>
@@ -148,6 +182,21 @@
                 </div>
             {/if}
             <div class="input-wrapper flex gap-4 items-center">
+                <button
+                        on:click={() => {handleThrow(1)}}
+                        disabled={isLoading}
+                        class="h-12 w-12 flex items-center justify-center text-3xl border border-green-500 text-green-500 hover:bg-green-500 hover:bg-opacity-20 transition-colors font-mono focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                >
+                    <Dice3 />
+                </button>
+                <button
+                        on:click={() => {handleThrow(2)}}
+                        disabled={isLoading}
+                        class="h-12 w-12 flex items-center justify-center text-3xl border border-green-500 text-green-500 hover:bg-green-500 hover:bg-opacity-20 transition-colors font-mono focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                >
+                    <Dices />
+                </button>
+
                 <input
                         type="text"
                         bind:value={message}
@@ -172,17 +221,18 @@
 <style>
     .term {
         position: relative;
-        border-radius: 10px;
+        border-radius: 5px;
         border: 2px solid grey;
         background-color: black;
         background-image: radial-gradient(rgba(0, 150, 0, 0.75), black 120%);
-        height: 30vh;
+        height: 35vh;
         margin: 0;
         overflow: hidden;
         padding: 2rem;
         color: white;
         font: 1.3rem Inconsolata, monospace;
         text-shadow: 0 0 5px #c8c8c8;
+        box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     }
 
     .term::after {
@@ -204,7 +254,7 @@
 
     .messages-container {
         overflow-y: auto;
-        max-height: calc(30vh - 5rem);
+        max-height: calc(35vh - 5rem);
     }
 
     .message {

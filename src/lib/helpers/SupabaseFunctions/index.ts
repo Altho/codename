@@ -104,6 +104,32 @@ export const insertChatMessage = async (sender: number, message: string, isLog: 
     }
 }
 
+export const castDice = async (sender: string, sessionId: string, amount: number) => {
+    try {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+
+
+        const { data, error } = await supabase.functions.invoke('throwDice', {
+            body: { sender, sessionId, diceAmount: amount },
+            headers: {
+                Authorization: `Bearer ${sessionData.session?.access_token}`
+            }
+        });
+
+        if (error) {
+            console.error('Function error:', error);
+            throw error;
+        }
+
+        console.log('Success:', data);
+        return data;
+    } catch (err) {
+        console.error('Detailed error:', err);
+        throw err;
+    }
+}
+
 
 export const addCharacterToSession = async (sessionId: string, characterId: number, isGm: boolean, password: string = '') => {
     try {
