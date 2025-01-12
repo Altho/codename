@@ -5,9 +5,12 @@
     import type {RealtimeChannel} from '@supabase/supabase-js';
     import {Dices, Dice3} from 'lucide-svelte';
     import {castDice, insertChatMessage} from "$lib/helpers/SupabaseFunctions";
+    import {RangeSlider} from "@skeletonlabs/skeleton";
 
     let messagesContainer: HTMLDivElement;
     let shouldAutoScroll = true;
+    let value = 6;
+    let max = 10;
 
     function handleScroll() {
         if (!messagesContainer) return;
@@ -130,7 +133,7 @@
                             if (!error && characterData) {
                                 messages = [...messages, {
                                     ...payload.new,
-                                    senderName: characterData.Name
+                                    senderName: `[${characterData.Name}]`
                                 }];
                             }
                         } else {
@@ -182,20 +185,32 @@
                 </div>
             {/if}
             <div class="input-wrapper flex gap-4 items-center">
-                <button
-                        on:click={() => {handleThrow(1)}}
-                        disabled={isLoading}
-                        class="h-12 w-12 flex items-center justify-center text-3xl border border-green-500 text-green-500 hover:bg-green-500 hover:bg-opacity-20 transition-colors font-mono focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                >
-                    <Dice3 />
-                </button>
-                <button
-                        on:click={() => {handleThrow(2)}}
-                        disabled={isLoading}
-                        class="h-12 w-12 flex items-center justify-center text-3xl border border-green-500 text-green-500 hover:bg-green-500 hover:bg-opacity-20 transition-colors font-mono focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                >
-                    <Dices />
-                </button>
+                <div class="p-4 border-2 border-green-500 rounded-lg font-mono max-w-md bg-black/5">
+                    <div class="space-y-4 flex gap-8">
+                        <RangeSlider
+                                name="range-slider"
+                                bind:value={value}
+                                min={1}
+                                max={max}
+                                step={1}
+                                ticked
+                                class="w-48 "
+                        >
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="font-bold text-green-500">[AutoDice]</div>
+                            <div class="text-sm text-green-500">{value} / {max}</div>
+                        </div>
+                        </RangeSlider>
+
+                        <button
+                                on:click={() => {handleThrow(value)}}
+                                disabled={isLoading}
+                                class="h-12 w-12 flex items-center justify-center text-3xl border border-green-500 text-green-500 hover:bg-green-500 hover:bg-opacity-20 transition-colors font-mono focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                        >
+                            <Dices />
+                        </button>
+                    </div>
+                </div>
 
                 <input
                         type="text"
@@ -235,6 +250,8 @@
         box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     }
 
+
+
     .term::after {
         content: "";
         position: absolute;
@@ -267,4 +284,22 @@
         background: #0080ff;
         text-shadow: none;
     }
+
+    input[type="range"] {
+        -webkit-appearance: none;
+    }
+
+    input[type="range"]:focus {
+        outline: none;
+    }
+
+
+
+
+
+
+
+
+
+
 </style>

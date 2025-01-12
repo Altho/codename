@@ -22,6 +22,7 @@
     import type {Character} from "$lib/types/TGameplay";
     import {currentSession} from "$lib/stores/GameSession";
     import {BadgeAlert} from "lucide-svelte";
+    import {goto} from "$app/navigation";
 
 
 
@@ -54,6 +55,8 @@
         addCharacterToSession($currentSession.id, $selectedCharacter?.id, true)
         addSkillsToCharacter($selectedCharacter?.id, $currentSession.id)
         selectedCharacter.set(null)
+        sessionBanner.set({showBanner:true, sessionName:$sessionBeingCreated.name, sessionId:$currentSession.id, characterName:$selectedCharacter.Name, characterId:$selectedCharacter?.id, sessionCharacterId:99, isGm:true, createdAt:new Date()})
+        goto('/')
     }
 
 

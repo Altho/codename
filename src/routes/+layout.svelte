@@ -211,9 +211,13 @@
 {#if session }
     <AppShell slotSidebarLeft="bg-surface-500/5 w-56 p-4">
         <svelte:fragment slot="header"></svelte:fragment>
+
         <svelte:fragment slot="sidebarLeft">
+            {#if $sessionBanner}
             <LeftMenu/>
+            {/if}
         </svelte:fragment>
+
         <!-- (sidebarRight) -->
         <!-- (pageHeader) -->
         <!-- Router Slot -->

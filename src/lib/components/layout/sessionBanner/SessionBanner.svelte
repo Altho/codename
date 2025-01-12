@@ -18,7 +18,7 @@
     <div class="container mx-auto flex justify-between items-center max-w-3xl">
         <div class="flex flex-col">
             <div class="flex items-center gap-2">
-                <h3 class="h3">{$sessionBanner?.sessionName}</h3>
+                <a href="./session" class="h3">{$sessionBanner?.sessionName}</a>
                 {#if $sessionBanner?.isGm}
                     <Crown class="h-5 w-5 text-yellow-500" />
                 {/if}
