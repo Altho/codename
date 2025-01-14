@@ -33,7 +33,7 @@
 </script>
 
 
-<div transition:fade class={`${roll.isPrivate ? 'bg-orange-600' : 'bg-green-600'} w-fit min-w-40 shadow-sm relative rounded-bl-xl rounded-tr-xl`}>
+<div class={`${roll.isPrivate ? 'bg-orange-600' : 'bg-green-600'} mb-4 w-fit min-w-64 shadow-xl relative rounded-bl-xl rounded-tr-xl`}>
     {#if roll.isPrivate}
         <div class={`${roll.isPrivate ? 'bg-orange-800' : 'bg-green-800'} pl-1 pr-1 shadow-lg absolute top-[-0.5em] left-3/4 -translate-x-1/2 bg-green-400`}>./AutoDice (private)
         </div>
@@ -51,7 +51,8 @@
                     <span class={`${roll.isPrivate ? 'text-red-600' : 'text-green-800'}`}>{die}</span>
                 {/if}
             {/each}
+            <div class="flex align-center justify-center text-3xl"><div class={`${roll.isPrivate ? 'bg-orange-700' : 'bg-green-700'} p-1 mb-2 rounded-sm`}>{total}</div></div>
         </div>
     </div>
-    <div class="flex align-center justify-center text-3xl"><div class={`${roll.isPrivate ? 'bg-orange-700' : 'bg-green-700'} p-1 mb-2 rounded-sm`}>{total}</div></div>
+    
 </div>

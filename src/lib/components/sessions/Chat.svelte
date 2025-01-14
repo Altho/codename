@@ -302,7 +302,7 @@
         <div class="h-full flex flex-col justify-end">
         
             {#if messages.length > 0}
-                <div on:scroll={handleScroll} bind:this={messagesContainer} class="messages-container mb-4">
+                <div on:scroll={handleScroll} bind:this={messagesContainer} class="messages-container  mb-4">
                     {#each messages as message}
                         <div class="message p-1 rounded">
                             {#if message.is_log}
@@ -312,9 +312,7 @@
                                 </div>
                             {:else if message.is_dice}
                                 <div
-                                        in:fly={{ y: 200, duration: 2000 }}
-                                        on:introstart={() => console.log('Animation starting')}
-                                        on:introend={() => console.log('Animation ended')}
+                                        class="flex justify-center"
                                 >
                                     <NewRoll roll={message.rollResult} />
                                 </div>
