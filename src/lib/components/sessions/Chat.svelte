@@ -6,11 +6,14 @@
     import {Dices, Dice3} from 'lucide-svelte';
     import {castDice, insertChatMessage} from "$lib/helpers/SupabaseFunctions";
     import {RangeSlider} from "@skeletonlabs/skeleton";
+    import NewRoll from "$lib/components/sessions/NewRoll.svelte";
 
     let messagesContainer: HTMLDivElement;
     let shouldAutoScroll = true;
     let value = 6;
     let max = 10;
+    
+    let isRollHidden = false;
 
     function handleScroll() {
         if (!messagesContainer) return;
@@ -31,14 +34,20 @@
     let isLoading = false;
     let subscription: RealtimeChannel;
     let messages: Array<{
-        id: string;
-        content: string;
-        created_at: string;
-        sender: number;
-        is_gm: boolean;
-        is_log: boolean;
+        id?: string;
+        content?: string;
+        created_at?: string;
+        sender?: number;
+        is_gm?: boolean;
+        is_log?: boolean;
         is_dice?: boolean;
         senderName?: string;
+        rollResult?: {
+            castGroup: string, 
+            isPrivate: boolean, 
+            characterName: string, 
+            rolls: [{cast_by: number,  result: number}]
+        }
     }> = [];
 
 
@@ -80,12 +89,53 @@
             is_log: msg.is_log
         }));
     }
+    
+    let diceRolls = [];
+    
+    const hiddenRoll = () => {
+        const diceArray = [];
+        let rollRes = [];
+
+        for (let i = 0; i < value; i++) {
+            const roll = Math.floor(Math.random() * 6) + 1
+
+            diceArray.push({cast_by: $sessionBanner?.characterId, result: roll});
+            
+            
+            
+          
+            //rollRes.push(roll)
+        }
+        messages = [...messages, {
+            is_dice: true,
+            rollResult: {
+                castGroup: '',
+                isPrivate: true,
+                characterName: $sessionBanner.characterName,
+                rolls: diceArray
+            }
+        }];
+
+        diceRolls = [...diceRolls, {
+            castGroup: '',
+            characterName: $sessionBanner.characterName,
+            rolls: diceArray,
+            timestamp: new Date()
+        }];
+    }
 
     const handleThrow = async (amount:number) => {
         if (!$sessionBanner ) {
             return
         }
-        await castDice($sessionBanner.characterName, $sessionBanner.sessionId, amount);
+        if (isRollHidden) {
+            hiddenRoll()
+            console.log(diceRolls)
+        } else {
+            await castDice($sessionBanner.characterId, $sessionBanner.sessionId, amount);
+            console.log(messages)
+        }
+        
     }
 
     const handleClick = async () => {
@@ -99,10 +149,12 @@
         console.log(messages)    }
 
     onMount(() => {
-
+        let chatSubscription;
+        let diceSubscription;
+        let pendingDiceGroups = new Map();
 
         if ($sessionBanner?.sessionId) {
-            subscription = supabase
+            chatSubscription = supabase
                 .channel('chat_messages_changes')
                 .on(
                     'postgres_changes',
@@ -113,7 +165,6 @@
                         filter: `session_id=eq.${$sessionBanner.sessionId}`
                     },
                     async (payload) => {
-
                         if (payload.eventType === 'INSERT') {
                             if (payload.new.sender === null) {
                                 messages = [...messages, {
@@ -128,8 +179,6 @@
                                 .eq('id', payload.new.sender)
                                 .single();
 
-                            console.log("triggered WS")
-
                             if (!error && characterData) {
                                 messages = [...messages, {
                                     ...payload.new,
@@ -142,11 +191,99 @@
                     }
                 )
                 .subscribe();
-        }
-    });
 
-    onDestroy(() => {
-        subscription?.unsubscribe();
+            diceSubscription = supabase
+                .channel('dice_rolls_changes')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'cast_dice',
+                        filter: `session_id=eq.${$sessionBanner.sessionId}`
+                    },
+                    async (payload) => {
+                        if (payload.eventType === 'INSERT') {
+                            const castGroup = payload.new.cast_group;
+
+                            let pendingGroup = pendingDiceGroups.get(castGroup);
+                            if (!pendingGroup) {
+                                pendingGroup = {
+                                    rolls: [],
+                                    timer: null,
+                                    characterData: null
+                                };
+                                pendingDiceGroups.set(castGroup, pendingGroup);
+
+                                const {data: characterData, error} = await supabase
+                                    .from('Characters')
+                                    .select('Name')
+                                    .eq('id', payload.new.cast_by)
+                                    .single();
+
+                                if (!error && characterData) {
+                                    pendingGroup.characterData = characterData;
+                                }
+                            }
+
+                            pendingGroup.rolls.push({
+                                ...payload.new,
+                                timestamp: new Date(payload.new.created_at)
+                            });
+
+                            if (pendingGroup.timer) {
+                                clearTimeout(pendingGroup.timer);
+                            }
+
+                            pendingGroup.timer = setTimeout(() => {
+                                const finalRolls = pendingGroup.rolls.sort((a, b) =>
+                                    a.timestamp - b.timestamp
+                                );
+
+                                diceRolls = [...diceRolls, {
+                                    castGroup,
+                                    characterName: pendingGroup.characterData?.Name || 'Unknown',
+                                    rolls: finalRolls,
+                                    timestamp: finalRolls[0].timestamp 
+                                }];
+                                
+                                    messages = [...messages, {
+                                        is_dice : true,
+                                        rollResult: {
+                                            castGroup: castGroup, 
+                                            characterName:pendingGroup.characterData?.Name || 'Unknown',
+                                            rolls: finalRolls.map(roll => {
+                                                return {
+                                                    cast_by: roll.cast_by,
+                                                    result: roll.result,
+                                                    isPrivate: false
+                                                }
+                                            })
+                                        }
+                                    }];
+                                
+                                
+                                console.log(diceRolls, "diceRolls")
+
+                                pendingDiceGroups.delete(castGroup);
+                            }, 500); 
+                        }
+                    }
+                )
+                .subscribe();
+        }
+
+        return () => {
+            chatSubscription?.unsubscribe();
+            diceSubscription?.unsubscribe();
+
+            for (const group of pendingDiceGroups.values()) {
+                if (group.timer) {
+                    clearTimeout(group.timer);
+                }
+            }
+            pendingDiceGroups.clear();
+        };
     });
 
     $: if ($sessionBanner?.sessionId) {
@@ -167,10 +304,7 @@
                                     <span class="text-purple-400 italic">{message.message}</span>
                                 </div>
                             {:else if message.is_dice}
-                                <div class="bg-blue-900/20 p-1 rounded">
-                                    <span class="text-blue-500 font-bold">{message.senderName}:</span>
-                                    <span class="text-blue-400">{message.message}</span>
-                                </div>
+                                <NewRoll roll={message.rollResult} />
                             {:else if message.is_gm}
                                 <div class="bg-orange-900/20 p-1 rounded">
                                     <span class="text-orange-500 font-bold">[GM] {message.senderName}:</span>
@@ -185,7 +319,20 @@
                 </div>
             {/if}
             <div class="input-wrapper flex gap-4 items-center">
+
                 <div class="p-4 border-2 border-green-500 rounded-lg font-mono max-w-md bg-black/5">
+                    <div class="flex items-center mb-4 space-x-2 text-green-500">
+                        <input
+                                type="checkbox"
+                                id="roll-visibility"
+                                bind:checked={isRollHidden}
+                                class="w-4 h-4 rounded border-green-500 text-green-500 focus:ring-green-500 focus:ring-opacity-50"
+                        />
+                        <label for="roll-visibility" class="text-sm cursor-pointer select-none">
+                            Hidden Roll
+                        </label>
+                    </div>
+
                     <div class="space-y-4 flex gap-8">
                         <RangeSlider
                                 name="range-slider"
@@ -194,12 +341,12 @@
                                 max={max}
                                 step={1}
                                 ticked
-                                class="w-48 "
+                                class="w-48"
                         >
-                        <div class="flex justify-between items-center mb-2">
-                            <div class="font-bold text-green-500">[AutoDice]</div>
-                            <div class="text-sm text-green-500">{value} / {max}</div>
-                        </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="font-bold text-green-500">[AutoDice]</div>
+                                <div class="text-sm text-green-500">{value} / {max}</div>
+                            </div>
                         </RangeSlider>
 
                         <button
@@ -240,7 +387,7 @@
         border: 2px solid grey;
         background-color: black;
         background-image: radial-gradient(rgba(0, 150, 0, 0.75), black 120%);
-        height: 35vh;
+        height: 45vh;
         margin: 0;
         overflow: hidden;
         padding: 2rem;
@@ -271,7 +418,7 @@
 
     .messages-container {
         overflow-y: auto;
-        max-height: calc(35vh - 5rem);
+        max-height: calc(45vh - 5rem);
     }
 
     .message {

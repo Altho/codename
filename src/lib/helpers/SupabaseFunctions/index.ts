@@ -110,7 +110,7 @@ export const insertChatMessage = async (sender: number, message: string, isLog: 
     }
 }
 
-export const castDice = async (sender: string, sessionId: string, amount: number) => {
+export const castDice = async (sender: number, sessionId: string, amount: number) => {
     try {
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;

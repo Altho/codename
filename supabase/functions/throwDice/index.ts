@@ -1,5 +1,6 @@
 
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { v4 as uuidv4 } from "npm:uuid";
+import { createClient } from 'npm:@supabase/supabase-js@2'
 import { serve } from "https://deno.land/std@0.140.0/http/server.ts";
 import {corsHeaders} from "../_shared/cors.ts";
 
@@ -53,37 +54,56 @@ serve(async (req: Request) => {
     }
 
     const diceArray = [];
+    const castGroup = uuidv4();
+    let rollRes = [];
 
     for (let i = 0; i < diceAmount; i++) {
-      diceArray.push(Math.floor(Math.random() * 6) + 1);
+      const roll = Math.floor(Math.random() * 6) + 1
+      
+      diceArray.push(roll);
+      const { data: dieRoll, error: rollError } = await supabaseClient
+          .from("cast_dice")
+          .insert([
+            {
+              "cast_group": castGroup,
+              "cast_by": sender,
+              "session_id": sessionId,
+              "result": roll,
+            },
+          ])
+          .select()
+      
+      rollRes.push(roll)
     }
 
     const total = diceArray.reduce((acc, current) => acc + current, 0);
+    
+  
 
-    const diceMessage = `${sender} cast ${diceAmount} ${diceAmount <= 1 ? 'die' : 'dice'}. The result was : [${diceArray}] for a total of ${total}`
+    // const diceMessage = `${sender} cast ${diceAmount} ${diceAmount <= 1 ? 'die' : 'dice'}. The result was : [${diceArray}] for a total of ${total}`
+    //
+    // const { data: payload, error: insertError } = await supabaseClient
+    //     .from("chat_messages")
+    //     .insert([
+    //       {
+    //         "message": diceMessage,
+    //         "is_log": false,
+    //         "is_dice": true,
+    //         "is_gm": false,
+    //         "session_id": sessionId,
+    //       },
+    //     ])
+    //     .select()
+    //     .single();
+    //
+    // if (insertError) {
+    //   return new Response(JSON.stringify({ error: insertError.message }), {
+    //     status: 400,
+    //     headers: {...corsHeaders, "Content-Type": "application/json" },
+    //   });
+    // }
 
-    const { data: payload, error: insertError } = await supabaseClient
-        .from("chat_messages")
-        .insert([
-          {
-            "message": diceMessage,
-            "is_log": false,
-            "is_dice": true,
-            "is_gm": false,
-            "session_id": sessionId,
-          },
-        ])
-        .select()
-        .single();
-
-    if (insertError) {
-      return new Response(JSON.stringify({ error: insertError.message }), {
-        status: 400,
-        headers: {...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify({ data: payload }), {
+    return new Response(JSON.stringify({ data: rollRes }), {
       status: 200,
       headers: {...corsHeaders, "Content-Type": "application/json" },
     });
