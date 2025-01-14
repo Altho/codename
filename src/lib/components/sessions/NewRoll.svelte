@@ -1,5 +1,7 @@
 <script lang="ts">
-    export let roll: RollResult
+    export let roll: RollResult   
+
+
 
     type RollResult = {
         castGroup: string,
@@ -30,7 +32,8 @@
     const total = roll.rolls.reduce((a, c) => a + c.result, 0)
 </script>
 
-<div class={`${roll.isPrivate ? 'bg-orange-600' : 'bg-green-600'} w-fit min-w-40 shadow-sm relative rounded-bl-xl rounded-tr-xl`}>
+
+<div transition:fade class={`${roll.isPrivate ? 'bg-orange-600' : 'bg-green-600'} w-fit min-w-40 shadow-sm relative rounded-bl-xl rounded-tr-xl`}>
     {#if roll.isPrivate}
         <div class={`${roll.isPrivate ? 'bg-orange-800' : 'bg-green-800'} pl-1 pr-1 shadow-lg absolute top-[-0.5em] left-3/4 -translate-x-1/2 bg-green-400`}>./AutoDice (private)
         </div>
@@ -38,8 +41,8 @@
         <div class="pl-1 pr-1 shadow-lg absolute top-[-0.5em] left-3/4 -translate-x-1/2 bg-green-400">./AutoDice</div>
 
     {/if}
-    <div class={`p-1 ${roll.isPrivate ? 'bg-orange-800' : 'bg-green-800'} w-fit rounded-br-md`}>{roll.characterName}</div>
-    <div class="flex align-center justify-center">
+    <div transition:fade class={`p-1 ${roll.isPrivate ? 'bg-orange-800' : 'bg-green-800'} w-fit rounded-br-md`}>{roll.characterName}</div>
+    <div  class="flex align-center justify-center">
         <div class="flex p-2 gap-2 text-5xl">
             {#each diceString as die}
                 {#if (die === '⚅')}

@@ -7,6 +7,7 @@
     import {castDice, insertChatMessage} from "$lib/helpers/SupabaseFunctions";
     import {RangeSlider} from "@skeletonlabs/skeleton";
     import NewRoll from "$lib/components/sessions/NewRoll.svelte";
+    import { fly, scale } from 'svelte/transition';
 
     let messagesContainer: HTMLDivElement;
     let shouldAutoScroll = true;
@@ -14,6 +15,7 @@
     let max = 10;
     
     let isRollHidden = false;
+    let loading = false;
 
     function handleScroll() {
         if (!messagesContainer) return;
@@ -107,6 +109,7 @@
             //rollRes.push(roll)
         }
         messages = [...messages, {
+            id: Date.now().toString(),
             is_dice: true,
             rollResult: {
                 castGroup: '',
@@ -132,7 +135,9 @@
             hiddenRoll()
             console.log(diceRolls)
         } else {
+            loading = true;
             await castDice($sessionBanner.characterId, $sessionBanner.sessionId, amount);
+            loading = false;
             console.log(messages)
         }
         
@@ -292,8 +297,10 @@
 </script>
 
 <div class="container mx-auto p-8 space-y-8">
+  
     <div class="term">
         <div class="h-full flex flex-col justify-end">
+        
             {#if messages.length > 0}
                 <div on:scroll={handleScroll} bind:this={messagesContainer} class="messages-container mb-4">
                     {#each messages as message}
@@ -304,7 +311,14 @@
                                     <span class="text-purple-400 italic">{message.message}</span>
                                 </div>
                             {:else if message.is_dice}
-                                <NewRoll roll={message.rollResult} />
+                                <div
+                                        in:fly={{ y: 200, duration: 2000 }}
+                                        on:introstart={() => console.log('Animation starting')}
+                                        on:introend={() => console.log('Animation ended')}
+                                >
+                                    <NewRoll roll={message.rollResult} />
+                                </div>
+                               
                             {:else if message.is_gm}
                                 <div class="bg-orange-900/20 p-1 rounded">
                                     <span class="text-orange-500 font-bold">[GM] {message.senderName}:</span>
@@ -319,44 +333,48 @@
                 </div>
             {/if}
             <div class="input-wrapper flex gap-4 items-center">
+                <div class="p-4 border-2 border-green-500 rounded-lg min-w-72 font-mono max-w-md bg-black/5">
+                    {#if loading}
+                        <div class="flex justify-center">
+                        <img height="100px" width="100px" src="/loader.svg"/>
+                        </div>
+                    {:else}
+                        <div class="flex items-center mb-4 space-x-2 text-green-500">
+                            <input
+                                    type="checkbox"
+                                    id="roll-visibility"
+                                    bind:checked={isRollHidden}
+                                    class="w-4 h-4 rounded border-green-500 text-green-500 focus:ring-green-500 focus:ring-opacity-50"
+                            />
+                            <label for="roll-visibility" class="text-sm cursor-pointer select-none">
+                                Hidden Roll
+                            </label>
+                        </div>
+                        <div class="space-y-4 flex gap-8">
+                            <RangeSlider
+                                    name="range-slider"
+                                    bind:value={value}
+                                    min={1}
+                                    max={max}
+                                    step={1}
+                                    ticked
+                                    class="w-48"
+                            >
+                                <div class="flex justify-between items-center mb-2">
+                                    <div class="font-bold text-green-500">[AutoDice]</div>
+                                    <div class="text-sm text-green-500">{value} / {max}</div>
+                                </div>
+                            </RangeSlider>
 
-                <div class="p-4 border-2 border-green-500 rounded-lg font-mono max-w-md bg-black/5">
-                    <div class="flex items-center mb-4 space-x-2 text-green-500">
-                        <input
-                                type="checkbox"
-                                id="roll-visibility"
-                                bind:checked={isRollHidden}
-                                class="w-4 h-4 rounded border-green-500 text-green-500 focus:ring-green-500 focus:ring-opacity-50"
-                        />
-                        <label for="roll-visibility" class="text-sm cursor-pointer select-none">
-                            Hidden Roll
-                        </label>
-                    </div>
-
-                    <div class="space-y-4 flex gap-8">
-                        <RangeSlider
-                                name="range-slider"
-                                bind:value={value}
-                                min={1}
-                                max={max}
-                                step={1}
-                                ticked
-                                class="w-48"
-                        >
-                            <div class="flex justify-between items-center mb-2">
-                                <div class="font-bold text-green-500">[AutoDice]</div>
-                                <div class="text-sm text-green-500">{value} / {max}</div>
-                            </div>
-                        </RangeSlider>
-
-                        <button
-                                on:click={() => {handleThrow(value)}}
-                                disabled={isLoading}
-                                class="h-12 w-12 flex items-center justify-center text-3xl border border-green-500 text-green-500 hover:bg-green-500 hover:bg-opacity-20 transition-colors font-mono focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                        >
-                            <Dices />
-                        </button>
-                    </div>
+                            <button
+                                    on:click={() => {handleThrow(value)}}
+                                    disabled={isLoading}
+                                    class="h-12 w-12 flex items-center justify-center text-3xl border border-green-500 text-green-500 hover:bg-green-500 hover:bg-opacity-20 transition-colors font-mono focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                            >
+                                <Dices />
+                            </button>
+                        </div>
+                    {/if}
                 </div>
 
                 <input
