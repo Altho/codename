@@ -8,11 +8,11 @@
 </script>
 
 {#if ($sessionBanner)}
-    <CoreSkillPoolDisplay />
+    <CoreSkillPoolDisplay  />
 
     <div class=" container mx-auto p-8 space-y-8">
         {#each $coreSkillsStore as category}
-            <CoreSkills categorie={category} />
+            <CoreSkills  categorie={category} />
         {/each}
     </div>
     {/if}

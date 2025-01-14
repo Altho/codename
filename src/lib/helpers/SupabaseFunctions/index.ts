@@ -1,4 +1,10 @@
 import {supabase} from "$lib/db/client";
+import type {PointValidation} from "$lib/stores/skillPoints";
+
+interface Skill {
+    skillId: number;
+    points: number;
+}
 
 export const createSession = async (sessionName: string, restricted: boolean, password?: boolean | null) => {
     try {
@@ -52,14 +58,14 @@ export const createCharacter = async (heroName: string) => {
     }
 }
 
-export const increaseCoreSkill = async (characterId: number, sessionId: string, skillId: number) => {
+export const increaseCoreSkill = async (skills: PointValidation[], characterId: number, sessionId: string ) => {
     try {
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
 
 
         const { data, error } = await supabase.functions.invoke('increaseCoreSkill', {
-            body: { skillId, characterId, sessionId },
+            body: { skills, characterId, sessionId },
             headers: {
                 Authorization: `Bearer ${sessionData.session?.access_token}`
             }

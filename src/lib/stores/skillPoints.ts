@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 
-interface SkillPoint {
+export interface SkillPoint {
     SkillId: number;
     Points: number;
     bonus: number;
@@ -9,4 +9,11 @@ interface SkillPoint {
     get total(): number;
 }
 
+export interface PointValidation {
+    skillId: number;
+    points: number;
+}
+
 export const skillPointsStore = writable<SkillPoint[]>([]);
+export const initialPoints = writable<SkillPoint[]>([]);
+export const pointsToValidate = writable<PointValidation[]>([]);

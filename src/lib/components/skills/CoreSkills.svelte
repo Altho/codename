@@ -4,16 +4,18 @@
     import { classesStore } from "$lib/stores/classes";
     import {sessionBanner} from "$lib/stores/sessionBanner";
     import {coreSkillsLoader} from "$lib/stores/loaders";
-    import { Plus } from 'lucide-svelte';
+    import { Plus, Minus } from 'lucide-svelte';
     import {availablePoints} from "$lib/stores/pointsPool";
     import {increaseCoreSkill} from "$lib/helpers/SupabaseFunctions";
     import { supabase } from "$lib/db/client";
     import { onMount, onDestroy } from 'svelte';
     import type { RealtimeChannel } from '@supabase/supabase-js';
     import { writable } from 'svelte/store';
-    import { skillPointsStore } from '$lib/stores/skillPoints';
+    import {initialPoints, pointsToValidate, type SkillPoint, skillPointsStore} from '$lib/stores/skillPoints';
 
     let flashingSkillId: number | null = null;
+
+
 
     const skillPoints = writable<Record<string, number>>({});
     let subscription: RealtimeChannel;
@@ -21,7 +23,21 @@
         fly
     } from 'svelte/transition';
     import {bonus} from "$lib/helpers/SkillFunctions";
-    
+    import {eventBus} from "$lib/helpers/eventBus";
+
+    initialPoints.set($skillPointsStore);
+    eventBus.on('resetSkills', (data: any) => {
+        console.log('Reset triggered at:');
+        resetSkills()
+    });
+
+    const resetSkills = async (): Promise<void> => {
+        pointsToValidate.set([])
+        await loadSkillPoints();
+
+    }
+
+
 
     $: if ($sessionBanner?.characterId && $sessionBanner?.sessionId) {
         loadSkillPoints();
@@ -49,6 +65,68 @@
         }));
 
         skillPointsStore.set(pointsWithTotal);
+        $initialPoints = $skillPointsStore
+
+
+        console.log($skillPointsStore);
+    }
+
+    const handleIncrease = (skillId: number): void => {
+        availablePoints.set($availablePoints - 1)
+        skillPointsStore.update(skills => {
+            return skills.map(skill =>
+            skill.SkillId === skillId ? { ...skill, Points: skill.Points + 1 } : skill
+            )
+        })
+        const targetSkill = $skillPointsStore.find(s => s.SkillId === skillId)
+        if (!targetSkill) {
+            return
+        }
+        const targetPoints = targetSkill.Points
+        const initialSkillPoints = $initialPoints.find(s => s.SkillId === skillId)?.Points;
+
+
+
+        const value = initialSkillPoints ? targetPoints - initialSkillPoints : targetPoints;
+        const validationTarget = $pointsToValidate?.find(v => v.skillId === skillId)
+        console.log(validationTarget, "validation")
+        if (!validationTarget) {
+            pointsToValidate.update(points => [...points, {skillId: targetSkill.SkillId, points: value}]);
+        } else {
+            validationTarget.points++
+        }
+        console.log($pointsToValidate);
+    }
+
+    const handleDecrease = (skillId: number): void => {
+        availablePoints.set($availablePoints + 1)
+        skillPointsStore.update(skills => {
+            return skills.map(skill =>
+                skill.SkillId === skillId ? { ...skill, Points: skill.Points - 1 } : skill
+            )
+        })
+        const targetSkill = $skillPointsStore.find(s => s.SkillId === skillId)
+        if (!targetSkill) {
+            return
+        }
+        const targetPoints = targetSkill.Points
+
+        const validationTarget = $pointsToValidate?.find(v => v.skillId === skillId)
+        const initialSkillPoints = $initialPoints.find(s => s.SkillId === skillId)?.Points;
+
+        if (!initialSkillPoints || !validationTarget) {
+            return
+        }
+
+        console.log(validationTarget.points,initialSkillPoints, "validation")
+        if (validationTarget.points - 1 < initialSkillPoints) {
+            console.log("removing")
+            $pointsToValidate = $pointsToValidate.filter(point => point.skillId !== skillId);
+        } else {
+            validationTarget.points--
+        }
+        console.log($pointsToValidate);
+
     }
 
     onMount(() => {
@@ -79,6 +157,7 @@
                     console.log("Subscription status:", status);
                 });
         }
+
     });
 
     onDestroy(() => {
@@ -87,19 +166,23 @@
         }
     });
 
-    const handleCLick = async (skillId: number) => {
-        const sessionId = $sessionBanner?.sessionId;
-        const characterId = $sessionBanner?.characterId;
-        coreSkillsLoader.set(true)
-        await increaseCoreSkill(characterId, sessionId, skillId);
-        coreSkillsLoader.set(false)
-        flash = true;
-        flashingSkillId = skillId;
-        setTimeout(() => {
-            flashingSkillId = null;
-        }, 500);
+    $: isDisabled = (skillId: number): boolean => {
+        const targetSkillPoints = $initialPoints.find(s => s.SkillId === skillId)?.Points;
+        const currentPoints = $skillPointsStore.find(s => s.SkillId === skillId)?.Points;
+        console.log(currentPoints);
 
+        if (currentPoints - 1 < targetSkillPoints) {
+            console.log("true Target skill points:", targetSkillPoints, currentPoints);
+            return true;
+        }
+        console.log("false Target skill points:", targetSkillPoints, currentPoints);
+
+        return false;
     }
+
+
+
+
 
     const classesAmount = $classesStore.length;
 
@@ -124,9 +207,9 @@
         <table class="min-w-full divide-y divide-gray-700">
             <thead class="bg-gray-800/75">
                 <tr>
-                    {#if ($availablePoints > 0)}
+
                         <th  class="px-4 py-3 text-left text-sm font-medium text-gray-300"></th>
-                    {/if}
+
                     <th
                         class="px-4 py-3 text-left text-sm font-medium text-gray-300"
                         >Points</th
@@ -174,17 +257,15 @@
                     <tr
                         class="hover:bg-gray-800/50 transition-colors duration-150"
                     >
-                        {#if ($availablePoints > 0)}
-                            <td class="px-4 py-3 text-sm text-gray-300">
-                                <button
-                                        class="flex items-center justify-center bg-green-600 hover:bg-green-700 disabled:bg-gray-500 transition-colors duration-200 rounded p-1.5"
-                                        on:click={() => {handleCLick(skill.id)}}
-                                        disabled={$coreSkillsLoader}
-                                >
-                                    <Plus class="w-4 h-4 text-white" />
-                                </button>
+
+
+                            <td class="px-4 py-3 text-sm text-gray-300 ">
+                                <div class="btn-group variant-glass-secondary  items-center justify-center h-12 w-32 rounded p-1.5">
+                                    <button disabled={isDisabled(skill.id)}  on:click={() => {handleDecrease(skill.id)}} class="hover:bg-green-700 disabled:bg-black transition-colors duration-200"><Minus/></button>
+                                    <button disabled={$availablePoints < 1} on:click={() => {handleIncrease(skill.id)}} class="hover:bg-green-700 disabled:bg-black transition-colors duration-200"><Plus/></button>
+                                </div>
                             </td>
-                            {/if}
+
                         <td class="px-4 py-3 text-sm text-gray-300 {flashingSkillId === skill.id ? 'flash' : ''}">
                             {$skillPointsStore.find(p => p.SkillId === skill.id)?.Points ?? 0}
                         </td>

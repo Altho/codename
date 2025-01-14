@@ -5,6 +5,18 @@ import {corsHeaders} from "../_shared/cors.ts";
 import {getBonus} from "../_shared/helpers.ts";
 
 
+
+interface RequestBody {
+  skills: Skill[];
+  characterId: string;
+  sessionId: string;
+}
+
+interface Skill {
+  skillId: number;
+  points: number;
+}
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -46,8 +58,8 @@ serve(async (req: Request) => {
       });
     }
 
-    const { skillId, characterId, sessionId } = (await req.json()) as RequestBody;
-    if (!skillId || !characterId || !sessionId) {
+    const { skills, characterId, sessionId } = (await req.json()) as RequestBody;
+    if (!skills || !characterId || !sessionId) {
       return new Response(JSON.stringify({ error: "Missing parameter" }), {
         status: 400,
         headers: {...corsHeaders, "Content-Type": "application/json" },
@@ -68,7 +80,11 @@ serve(async (req: Request) => {
       });
     }
 
-    if (currentPool.amount <= 0) {
+    const totalPoints = skills.reduce((sum, skill) => sum + skill.points, 0);
+
+
+
+    if (currentPool.amount <= 0 || currentPool.amount < totalPoints) {
       return new Response(JSON.stringify({ error: "Out of points" }), {
         status: 404,
         headers: {...corsHeaders, "Content-Type": "application/json" },
@@ -77,7 +93,7 @@ serve(async (req: Request) => {
 
     const { data: response, error: insertError } = await supabaseClient
         .from("coreskill_pools")
-        .update({ amount: currentPool.amount - 1 })
+        .update({ amount: currentPool.amount - totalPoints })
         .eq("character_id", characterId)
         .eq("session_id", sessionId)
         .select()
@@ -91,46 +107,47 @@ serve(async (req: Request) => {
     }
 
 
-    const { data: currentSkillPoints, error: fetchError } = await supabaseClient
-        .from("skill_points")
-        .select("*")
-        .eq("SkillId", skillId)
-        .eq("session_id", sessionId)
-        .eq("character_id", characterId)
-        .single();
+    for (const skill of skills) {
+      const {data: currentSkillPoints, error: fetchError} = await supabaseClient
+          .from("skill_points")
+          .select("*")
+          .eq("SkillId", skill.skillId)
+          .eq("session_id", sessionId)
+          .eq("character_id", characterId)
+          .single();
 
-    if (fetchError || !currentSkillPoints) {
-      return new Response(JSON.stringify({ error: "Skill not found" }), {
-        status: 404,
-        headers: {...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (fetchError || !currentSkillPoints) {
+        return new Response(JSON.stringify({error: `Skill ${skill.skillId} not found`}), {
+          status: 404,
+          headers: {...corsHeaders, "Content-Type": "application/json"},
+        });
+      }
+
+      const {data: skillPoints, error: skillPointsError} = await supabaseClient
+          .from("skill_points")
+          .update({
+            Points: currentSkillPoints.Points + skill.points,
+            bonus: getBonus(currentSkillPoints.Points + skill.points),
+          })
+          .eq("SkillId", skill.skillId)
+          .eq("session_id", sessionId)
+          .eq("character_id", characterId)
+          .select()
+          .single();
+
+      if (skillPointsError) {
+        return new Response(JSON.stringify({error: "Error updating skill points"}), {
+          status: 400,
+          headers: {...corsHeaders, "Content-Type": "application/json"},
+        });
+      }
     }
 
-    const { data: skillPoints, error: skillPointsError } = await supabaseClient
-        .from("skill_points")
-        .update({
-          Points: currentSkillPoints.Points + 1,
-          bonus: getBonus(currentSkillPoints.Points + 1),
-        })
-        .eq("SkillId", skillId)
-        .eq("session_id", sessionId)
-        .eq("character_id", characterId)
-        .select()
-        .single();
-
-    if (skillPointsError) {
-      return new Response(JSON.stringify({ error: "Error updating skill points" }), {
-        status: 400,
-        headers: {...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-  
-
-    return new Response(JSON.stringify({ data: skillPoints }), {
+    return new Response(JSON.stringify({ message: "All skills updated successfully" }), {
       status: 200,
       headers: {...corsHeaders, "Content-Type": "application/json" },
     });
+
   } catch (e) {
     console.error("Error:", e);
     return new Response(JSON.stringify({ error: "Internal server error", details: e.message }), {
@@ -139,3 +156,6 @@ serve(async (req: Request) => {
     });
   }
 });
+  
+
+
