@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import type {CharacterSkills} from "$lib/types/TGameplay";
 
 export interface SkillPoint {
     SkillId: number;
@@ -9,7 +10,8 @@ export interface SkillPoint {
     get total(): number;
 }
 
-export interface PointValidation {
+export
+interface PointValidation {
     skillId: number;
     points: number;
 }
@@ -17,3 +19,5 @@ export interface PointValidation {
 export const skillPointsStore = writable<SkillPoint[]>([]);
 export const initialPoints = writable<SkillPoint[]>([]);
 export const pointsToValidate = writable<PointValidation[]>([]);
+
+export const remoteCharacterSkills = writable<CharacterSkills>({});

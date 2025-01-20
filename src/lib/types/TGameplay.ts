@@ -30,6 +30,17 @@ export type Skill = {
   DcEffect: string;
 };
 
+export type SkillDetails = {
+  Points: number;
+  Other: number;
+  Bonus: number;
+}
+
+export type CharacterSkills = {
+  [category: string]: {
+    [skillName: string]: SkillDetails;
+  };
+}
 
 export interface Profile {
   id: string;

@@ -84,6 +84,33 @@ export const increaseCoreSkill = async (skills: PointValidation[], characterId: 
     }
 }
 
+
+export const getPlayerSkills = async ( character_id: number, session_id: string ) => {
+    try {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+
+
+        const { data, error } = await supabase.functions.invoke('getPlayerSkills', {
+            body: { character_id, session_id },
+            headers: {
+                Authorization: `Bearer ${sessionData.session?.access_token}`
+            }
+        });
+
+        if (error) {
+            console.error('Function error:', error);
+            throw error;
+        }
+
+        console.log('Success:', data);
+        return data;
+    } catch (err) {
+        console.error('Detailed error:', err);
+        throw err;
+    }
+}
+
 export const insertChatMessage = async (sender: number, message: string, isLog: boolean, isGm: boolean, sessionId: string) => {
     try {
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
