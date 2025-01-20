@@ -137,7 +137,6 @@
         } else {
             loading = true;
             await castDice($sessionBanner.characterId, $sessionBanner.sessionId, amount);
-            loading = false;
             console.log(messages)
         }
         
@@ -271,6 +270,8 @@
                                 console.log(diceRolls, "diceRolls")
 
                                 pendingDiceGroups.delete(castGroup);
+                                loading = false;
+
                             }, 500); 
                         }
                     }

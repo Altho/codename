@@ -24,7 +24,7 @@ const config = {
       themes: {
         preset: [
           // Enable 'enhancements' per each registered theme:
-          { name: "skeleton", enhancements: true }
+          { name: "gold-nouveau", enhancements: true }
         ]
       }
     }),
